@@ -1,8 +1,9 @@
 const express = require('express');
 const { body, param } = require('express-validator');
+const mongoose = require('mongoose');
 const CooperativeBank = require('../models/CooperativeBank');
 const User = require('../models/User');
-const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles, authorizeBankAccess } = require('../middleware/auth');
 const { handleValidationErrors, asyncHandler, successResponse, errorResponse } = require('../middleware/validation');
 
 const router = express.Router();

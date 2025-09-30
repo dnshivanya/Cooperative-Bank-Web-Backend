@@ -1,30 +1,59 @@
-# Multi-Tenant Cooperative Banking Backend API
+# Cooperative Banking Backend API
 
-A comprehensive multi-tenant backend API for managing multiple cooperative banks, similar to how regular banking works with HDFC, ICICI, Axis, etc. Built with Node.js, Express, and MongoDB.
+A comprehensive, production-ready backend API for cooperative banking systems built with Node.js, Express, MongoDB, and Redis.
 
-## Features
+## 🚀 Features
 
-- **Multi-Tenant Architecture**: Support for multiple cooperative banks
-- **Cooperative Bank Management**: Create, manage, and configure different banks
-- **User Management**: Registration, login, profile management per bank
-- **Account Management**: Create accounts, view balances, account types per bank
-- **Transaction Operations**: Deposit, withdrawal, transfer money within banks
-- **Security**: JWT authentication, password hashing, input validation
-- **Role-based Access**: Member, Manager, Admin, Super Admin roles
-- **Bank-scoped Operations**: All operations are scoped to specific cooperative banks
-- **Comprehensive Validation**: Input validation and error handling
+### Core Banking Features
+- **User Management**: Registration, authentication, profile management
+- **Account Management**: Multiple account types (Savings, Current, FD, RD)
+- **Transaction Processing**: Deposits, withdrawals, transfers with validation
+- **Cooperative Bank Management**: Multi-bank support with bank-specific settings
+- **KYC Document Management**: Secure file upload and verification system
 
-## Tech Stack
+### Security & Compliance
+- **JWT Authentication**: Secure token-based authentication
+- **Role-based Authorization**: Member, Admin, Manager, Super Admin roles
+- **Audit Logging**: Comprehensive activity tracking
+- **Rate Limiting**: Per-user and per-endpoint rate limiting
+- **Input Validation**: Comprehensive request validation
+- **Security Headers**: Helmet.js security middleware
 
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM for MongoDB
-- **JWT** - Authentication
-- **bcryptjs** - Password hashing
-- **express-validator** - Input validation
+### Performance & Monitoring
+- **Redis Caching**: High-performance caching layer
+- **Winston Logging**: Structured logging with rotation
+- **Health Checks**: Application health monitoring
+- **Performance Monitoring**: Request timing and metrics
+- **Error Tracking**: Comprehensive error handling and logging
 
-## Installation
+### Email & Notifications
+- **Email Service**: Transaction notifications, password reset
+- **Template System**: Professional email templates
+- **SMTP Integration**: Configurable email delivery
+
+## 🛠️ Technology Stack
+
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Cache**: Redis
+- **Authentication**: JWT with bcrypt
+- **File Upload**: Multer with Sharp image processing
+- **Logging**: Winston with daily rotation
+- **Testing**: Jest with Supertest
+- **Validation**: Express-validator
+- **Security**: Helmet, CORS, Rate limiting
+
+## 📋 Prerequisites
+
+- Node.js 18+ 
+- MongoDB 7.0+
+- Redis 7.0+
+- Docker & Docker Compose (optional)
+
+## 🚀 Quick Start
+
+### Development Setup
 
 1. **Clone the repository**
    ```bash
@@ -37,201 +66,262 @@ A comprehensive multi-tenant backend API for managing multiple cooperative banks
    npm install
    ```
 
-3. **Environment Setup**
-   Create a `.env` file in the root directory:
-   ```env
-   NODE_ENV=development
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/cooperative-banking
-   JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-   JWT_EXPIRE=7d
-   BCRYPT_ROUNDS=12
-   ```
-
-4. **Start MongoDB**
-   Make sure MongoDB is running on your system.
-
-5. **Run the application**
+3. **Environment setup**
    ```bash
-   # Development mode with auto-restart
-   npm run dev
-   
-   # Production mode
-   npm start
+   cp config.env.example config.env
+   # Edit config.env with your settings
    ```
 
-## API Endpoints
+4. **Start services with Docker**
+   ```bash
+   chmod +x deploy.sh
+   ./deploy.sh development
+   ```
 
-### Authentication Routes (`/api/auth`)
+5. **Or start manually**
+   ```bash
+   # Start MongoDB and Redis
+   # Update config.env with connection details
+   
+   # Start the application
+   npm run dev
+   ```
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/cooperative-banks` | Get available banks for registration | Public |
-| POST | `/register` | Register new user (with bank selection) | Public |
-| POST | `/login` | User login | Public |
-| GET | `/profile` | Get user profile | Private |
-| PUT | `/profile` | Update user profile | Private |
-| PUT | `/change-password` | Change password | Private |
+### Production Deployment
 
-### Cooperative Bank Management Routes (`/api/cooperative-banks`)
+1. **Using Docker Compose**
+   ```bash
+   ./deploy.sh production
+   ```
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/` | Create new cooperative bank | Super Admin |
-| GET | `/` | Get all cooperative banks | Super Admin |
-| GET | `/:bankId` | Get bank details | Owner/Super Admin |
-| PUT | `/:bankId` | Update bank details | Super Admin |
-| PUT | `/:bankId/settings` | Update bank settings | Super Admin |
-| GET | `/:bankId/stats` | Get bank statistics | Owner/Super Admin |
-| GET | `/search/banks` | Search banks | Super Admin |
-| GET | `/stats/system` | System-wide statistics | Super Admin |
+2. **Using PM2**
+   ```bash
+   npm install -g pm2
+   pm2 start ecosystem.config.js --env production
+   ```
 
-### User Management Routes (`/api/users`) - Bank Scoped
+## 📚 API Documentation
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| GET | `/` | Get all users in bank | Admin/Manager |
-| GET | `/:userId` | Get user by ID | Owner/Admin/Manager |
-| PUT | `/:userId/status` | Update user status | Admin/Manager |
-| PUT | `/:userId/role` | Update user role | Admin |
-| GET | `/search/users` | Search users in bank | Admin/Manager |
-| GET | `/stats/overview` | User statistics for bank | Admin/Manager |
+### Authentication Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update user profile
+- `POST /api/auth/forgot-password` - Password reset request
+- `POST /api/auth/reset-password` - Password reset
 
-### Account Routes (`/api/accounts`) - Bank Scoped
+### User Management
+- `GET /api/users` - List users (Admin/Manager)
+- `GET /api/users/:id` - Get user details
+- `PUT /api/users/:id/status` - Update user status
+- `PUT /api/users/:id/role` - Update user role
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/` | Create new account | Private |
-| GET | `/my-accounts` | Get user's accounts | Private |
-| GET | `/:accountId` | Get account details | Owner/Admin/Manager |
-| GET | `/:accountId/balance` | Get account balance | Owner/Admin/Manager |
-| PUT | `/:accountId` | Update account details | Owner/Admin/Manager |
-| PUT | `/:accountId/deactivate` | Deactivate account | Owner/Admin/Manager |
-| GET | `/admin/all-accounts` | Get all accounts in bank | Admin/Manager |
-| GET | `/admin/stats` | Account statistics for bank | Admin/Manager |
+### Account Management
+- `POST /api/accounts` - Create account
+- `GET /api/accounts/my-accounts` - Get user's accounts
+- `GET /api/accounts/:id` - Get account details
+- `GET /api/accounts/:id/balance` - Get account balance
 
-### Transaction Routes (`/api/transactions`) - Bank Scoped
+### Transaction Processing
+- `POST /api/transactions/deposit` - Deposit money
+- `POST /api/transactions/withdraw` - Withdraw money
+- `POST /api/transactions/transfer` - Transfer money
+- `GET /api/transactions/history/:accountId` - Transaction history
 
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|---------|
-| POST | `/deposit` | Deposit money | Private |
-| POST | `/withdraw` | Withdraw money | Private |
-| POST | `/transfer` | Transfer money | Private |
-| GET | `/history/:accountId` | Transaction history | Owner/Admin/Manager |
-| GET | `/:transactionId` | Get transaction details | Owner/Admin/Manager |
-| GET | `/admin/all-transactions` | Get all transactions in bank | Admin/Manager |
-| GET | `/admin/stats` | Transaction statistics for bank | Admin/Manager |
+### KYC Document Management
+- `POST /api/kyc/upload` - Upload KYC document
+- `GET /api/kyc/my-documents` - Get user's documents
+- `GET /api/kyc/:id` - Get document details
+- `DELETE /api/kyc/:id` - Delete document
 
-## Data Models
+### Audit & Monitoring
+- `GET /api/audit` - Get audit logs (Admin/Manager)
+- `GET /api/audit/stats` - Get audit statistics
+- `GET /api/health` - Health check
 
-### Cooperative Bank Model
-- Bank identification (bank code, name, registration details)
-- Contact and address information
-- Banking details (IFSC, MICR, SWIFT codes)
-- Operational settings (working hours, timezone)
-- Financial details (capital, reserves)
-- Bank-specific settings (interest rates, limits, fees)
-- Status and theme configuration
+## 🔧 Configuration
 
-### User Model
-- Personal information (name, email, phone, DOB)
-- Address details
-- KYC documents (Aadhar, PAN)
-- Occupation and income
-- **Cooperative bank association**
-- Role-based access (member, manager, admin, super_admin)
+### Environment Variables
 
-### Account Model
-- Account number (auto-generated per bank)
-- **Cooperative bank association**
-- Account types (savings, current, FD, RD)
-- Balance and minimum balance
-- Interest rates
-- Nominee details
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=5000
 
-### Transaction Model
-- Transaction ID (auto-generated)
-- **Cooperative bank association**
-- Amount and transaction type
-- Source and destination accounts
-- Balance after transaction
-- Processing details
+# Database
+MONGODB_URI=mongodb://localhost:27017/cooperative-banking
 
-## Security Features
+# Redis
+REDIS_URL=redis://localhost:6379
 
-- **JWT Authentication**: Secure token-based authentication with bank context
-- **Password Hashing**: bcrypt for secure password storage
-- **Input Validation**: Comprehensive validation using express-validator
-- **Rate Limiting**: Protection against brute force attacks
-- **CORS**: Cross-origin resource sharing configuration
-- **Helmet**: Security headers
-- **Role-based Authorization**: Different access levels (Member, Manager, Admin, Super Admin)
-- **Bank-scoped Access**: All operations are scoped to specific cooperative banks
-- **Multi-tenant Security**: Complete isolation between different cooperative banks
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRE=7d
 
-## Error Handling
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 
-The API includes comprehensive error handling:
-- Validation errors with detailed messages
-- Authentication and authorization errors
-- Database operation errors
-- Custom error responses with appropriate HTTP status codes
+# File Upload
+MAX_FILE_SIZE=10485760
+UPLOAD_DIR=uploads
 
-## Multi-Tenant Architecture
-
-This backend supports multiple cooperative banks, similar to how regular banking works:
-
-### How it Works:
-1. **Super Admin** creates and manages different cooperative banks
-2. **Each Bank** has its own:
-   - Users and customers
-   - Accounts and transactions
-   - Settings and configurations
-   - Admin and manager roles
-3. **Complete Isolation**: Users can only access data from their own cooperative bank
-4. **Bank-specific Operations**: All banking operations are scoped to the user's cooperative bank
-
-### Example Structure:
-```
-Cooperative Banking System
-├── Bank A (e.g., "City Cooperative Bank")
-│   ├── Users (Members, Admin, Manager)
-│   ├── Accounts (Savings, Current, FD)
-│   └── Transactions
-├── Bank B (e.g., "Rural Cooperative Society")
-│   ├── Users (Members, Admin, Manager)
-│   ├── Accounts (Savings, Current, FD)
-│   └── Transactions
-└── Bank C (e.g., "Urban Credit Union")
-    ├── Users (Members, Admin, Manager)
-    ├── Accounts (Savings, Current, FD)
-    └── Transactions
+# Logging
+LOG_LEVEL=info
+LOG_DIR=logs
 ```
 
-## Development
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests for CI
+npm run test:ci
+```
+
+## 📊 Monitoring & Logs
+
+### Log Files
+- `logs/combined-YYYY-MM-DD.log` - All logs
+- `logs/error-YYYY-MM-DD.log` - Error logs only
+- `logs/audit-YYYY-MM-DD.log` - Audit logs
+
+### Health Check
+```bash
+curl http://localhost:5000/api/health
+```
+
+### Monitoring Endpoints
+- Health check: `/api/health`
+- Metrics: `/api/metrics` (if enabled)
+
+## 🔒 Security Features
+
+### Rate Limiting
+- Global: 100 requests per 15 minutes
+- Login: 5 attempts per 15 minutes
+- Transactions: 10-20 per minute (type dependent)
+- File uploads: 20 per hour
+
+### Security Headers
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- X-XSS-Protection: 1; mode=block
+- Strict-Transport-Security
+
+### Input Validation
+- Email format validation
+- Phone number validation (10 digits)
+- Aadhar number validation (12 digits)
+- PAN number validation
+- File type and size validation
+
+## 🚀 Deployment Options
+
+### Docker Deployment
+```bash
+# Development
+docker-compose up -d
+
+# Production
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### PM2 Deployment
+```bash
+pm2 start ecosystem.config.js --env production
+```
+
+### Manual Deployment
+```bash
+npm install --production
+npm start
+```
+
+## 📈 Performance Optimization
+
+### Caching Strategy
+- User sessions: Redis
+- API responses: Redis (configurable)
+- Database queries: Mongoose caching
+
+### Database Optimization
+- Indexed fields for fast queries
+- Connection pooling
+- Query optimization
+
+### File Processing
+- Image compression with Sharp
+- PDF validation
+- Secure file storage
+
+## 🔧 Development
 
 ### Project Structure
 ```
-├── models/           # Database models
-├── routes/           # API routes
+├── config/           # Configuration files
 ├── middleware/       # Custom middleware
-├── server.js         # Main server file
-└── package.json      # Dependencies and scripts
+├── models/          # Database models
+├── routes/          # API routes
+├── services/        # Business logic services
+├── tests/           # Test files
+├── utils/           # Utility functions
+├── uploads/         # File uploads
+├── logs/            # Log files
+└── server.js        # Application entry point
 ```
 
-### Available Scripts
-- `npm run dev` - Start development server with nodemon
-- `npm start` - Start production server
-- `npm test` - Run tests (when implemented)
+### Adding New Features
+1. Create model in `models/`
+2. Add routes in `routes/`
+3. Implement business logic in `services/`
+4. Add middleware for validation/auth
+5. Write tests in `tests/`
+6. Update documentation
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue in the repository
+- Check the documentation
+- Review the logs for error details
+
+## 🔄 Updates & Maintenance
+
+### Regular Tasks
+- Database backups
+- Log rotation
+- Security updates
+- Performance monitoring
+- Dependency updates
+
+### Backup Strategy
+- Automated daily backups
+- 30-day retention
+- Point-in-time recovery
+- Cross-region replication (production)
+
+---
+
+**Built with ❤️ for cooperative banking systems**

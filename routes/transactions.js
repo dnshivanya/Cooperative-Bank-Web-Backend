@@ -2,13 +2,16 @@ const express = require('express');
 const { body, param } = require('express-validator');
 const Account = require('../models/Account');
 const Transaction = require('../models/Transaction');
-const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const User = require('../models/User');
+const { authenticateToken, authorizeRoles, authorizeBankAccess } = require('../middleware/auth');
 const { handleValidationErrors, asyncHandler, successResponse, errorResponse } = require('../middleware/validation');
+const emailService = require('../services/emailService');
+const { transactionRateLimiter } = require('../middleware/rateLimiting');
 
 const router = express.Router();
 
 // Deposit money
-router.post('/deposit', authenticateToken, [
+router.post('/deposit', authenticateToken, transactionRateLimiter(60 * 1000, 20), [
   body('accountId')
     .isMongoId()
     .withMessage('Invalid account ID'),
@@ -47,6 +50,25 @@ router.post('/deposit', authenticateToken, [
     return errorResponse(res, 400, 'Account is deactivated');
   }
 
+  // Check daily transaction limits (basic implementation)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const todayTransactions = await Transaction.find({
+    fromAccount: accountId,
+    processedAt: { $gte: today, $lt: tomorrow },
+    transactionType: { $in: ['deposit', 'withdrawal', 'transfer'] }
+  });
+
+  const todayAmount = todayTransactions.reduce((sum, txn) => sum + txn.amount, 0);
+  const dailyLimit = 100000; // Default limit, should come from bank settings
+
+  if (todayAmount + amount > dailyLimit) {
+    return errorResponse(res, 400, `Daily transaction limit exceeded. Limit: ${dailyLimit}, Used: ${todayAmount}`);
+  }
+
   // Update account balance
   const newBalance = account.balance + amount;
   account.balance = newBalance;
@@ -67,6 +89,26 @@ router.post('/deposit', authenticateToken, [
 
   await transaction.save();
 
+  // Send transaction notification email
+  try {
+    const user = await User.findById(account.userId);
+    await emailService.sendTransactionNotification(
+      user.email,
+      user.fullName,
+      {
+        type: 'deposit',
+        amount: amount,
+        accountNumber: account.accountNumber,
+        balance: newBalance,
+        timestamp: new Date().toLocaleString(),
+        description: description
+      }
+    );
+  } catch (emailError) {
+    console.error('Failed to send transaction notification:', emailError);
+    // Don't fail transaction if email fails
+  }
+
   successResponse(res, 201, 'Deposit successful', {
     transaction,
     newBalance
@@ -74,7 +116,7 @@ router.post('/deposit', authenticateToken, [
 }));
 
 // Withdraw money
-router.post('/withdraw', authenticateToken, [
+router.post('/withdraw', authenticateToken, transactionRateLimiter(60 * 1000, 15), [
   body('accountId')
     .isMongoId()
     .withMessage('Invalid account ID'),
@@ -140,7 +182,7 @@ router.post('/withdraw', authenticateToken, [
 }));
 
 // Transfer money between accounts
-router.post('/transfer', authenticateToken, [
+router.post('/transfer', authenticateToken, transactionRateLimiter(60 * 1000, 10), [
   body('fromAccountId')
     .isMongoId()
     .withMessage('Invalid from account ID'),

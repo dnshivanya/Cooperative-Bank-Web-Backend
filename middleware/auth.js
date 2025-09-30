@@ -3,13 +3,13 @@ const User = require('../models/User');
 const CooperativeBank = require('../models/CooperativeBank');
 
 // Generate JWT token
-const generateToken = (userId, cooperativeBankId = null) => {
+const generateToken = (userId, cooperativeBankId = null, expiresIn = null) => {
   const payload = { userId };
   if (cooperativeBankId) {
     payload.cooperativeBankId = cooperativeBankId;
   }
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+    expiresIn: expiresIn || process.env.JWT_EXPIRE || '7d'
   });
 };
 

@@ -68,7 +68,9 @@ const accountSchema = new mongoose.Schema({
 accountSchema.pre('save', async function(next) {
   if (!this.accountNumber) {
     const count = await mongoose.model('Account').countDocuments({ cooperativeBankId: this.cooperativeBankId });
-    this.accountNumber = String(count + 1).padStart(12, '0');
+    const bankCode = await mongoose.model('CooperativeBank').findById(this.cooperativeBankId).select('bankCode');
+    const bankCodePrefix = bankCode ? bankCode.bankCode.substring(0, 3) : '001';
+    this.accountNumber = `${bankCodePrefix}${String(count + 1).padStart(9, '0')}`;
   }
   next();
 });
